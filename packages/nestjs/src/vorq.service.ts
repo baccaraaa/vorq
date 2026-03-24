@@ -40,4 +40,8 @@ export class VorqService {
   on<E extends keyof VorqEventMap>(event: E, listener: (data: VorqEventMap[E]) => void): void {
     this.vorq.on(event, listener);
   }
+
+  workflow<TInput>(name: string) {
+    return this.vorq.workflow<TInput>(name);
+  }
 }

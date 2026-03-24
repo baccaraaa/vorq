@@ -7,6 +7,27 @@ export interface VorqEventMap {
   "task.deadLettered": { taskId: string; queue: string; error: Error; attempts: number };
   "task.abandoned": { taskId: string; queue: string; reason: string };
   "task.progress": { taskId: string; queue: string; percent: number };
+  "workflow.started": { workflowId: string; name: string; input: unknown };
+  "workflow.stepCompleted": {
+    workflowId: string;
+    step: string;
+    result: unknown;
+    duration: number;
+  };
+  "workflow.stepRetrying": {
+    workflowId: string;
+    step: string;
+    attempt: number;
+    nextDelay: number;
+  };
+  "workflow.stepFailed": {
+    workflowId: string;
+    step: string;
+    error: Error;
+    attempts: number;
+  };
+  "workflow.completed": { workflowId: string; results: unknown; duration: number };
+  "workflow.failed": { workflowId: string; failedStep: string; error: Error };
 }
 
 export type VorqEvent = keyof VorqEventMap;

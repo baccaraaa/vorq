@@ -1,6 +1,6 @@
 # Vorq
 
-Distributed task queue for TypeScript.
+Distributed task queue for TypeScript with **type-safe workflows**, pluggable transports (Redis, RabbitMQ), and optional persistence.
 
 [![npm version](https://img.shields.io/npm/v/@vorq/core.svg)](https://www.npmjs.com/package/@vorq/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -14,6 +14,7 @@ Distributed task queue for TypeScript.
 - **Retry with exponential backoff** -- configurable retry policies with fixed, exponential, and jitter strategies
 - **Dead letter queue** -- automatic routing of permanently failed tasks
 - **Task dependencies (DAG)** -- define execution order with directed acyclic graphs
+- **Type-safe workflows** -- multi-step pipelines with compile-time validation between steps
 - **Cron scheduler** -- recurring tasks with cron expressions
 - **Pluggable transports** -- Redis and RabbitMQ adapters, in-memory for testing
 - **Optional PostgreSQL persistence** -- task history and metrics via Prisma
@@ -172,6 +173,42 @@ await vorq.enqueue("pipeline", {
 
 If a dependency fails and is sent to the dead letter queue, all downstream tasks are automatically abandoned.
 
+### Type-safe Workflows
+
+Define multi-step pipelines where TypeScript validates at compile time that each step's output matches downstream expectations:
+
+```ts
+const etl = vorq
+  .workflow<{ url: string }>("etl-pipeline")
+  .step("fetch", { timeout: 30_000, maxRetries: 3 }, async (ctx) => {
+    const res = await fetch(ctx.input.url);
+    return { data: await res.json() };
+  })
+  .step("transform", async (ctx) => {
+    // ctx.results.fetch is fully typed -- { data: unknown }
+    const rows = normalize(ctx.results.fetch.data);
+    return { rows, count: rows.length };
+  })
+  .step("load", { maxRetries: 2 }, async (ctx) => {
+    // ctx.results.transform is fully typed -- { rows: ..., count: number }
+    await db.insertMany(ctx.results.transform.rows);
+    return { inserted: ctx.results.transform.count };
+  })
+  .build();
+
+const result = await etl.run({ url: "https://api.example.com/data" });
+
+if (result.status === "completed") {
+  console.log(`Inserted ${result.results.load.inserted} rows`);
+  //                      ^^^ No optional chaining -- TS knows it's complete
+}
+```
+
+**Compile-time guarantees:**
+- Accessing a non-existent step result -> TypeScript error
+- Duplicate step names -> TypeScript error
+- Discriminated union on result: `completed` gives full types, `failed` gives partial
+
 ### Scheduling (Cron)
 
 Schedule recurring tasks with cron expressions:
@@ -283,6 +320,16 @@ await vorq.enqueue("emails", {
 
 ## Transport Adapters
 
+Vorq ships with two production-ready transports. Pick the one that fits your infrastructure:
+
+| Capability | Redis (`@vorq/redis`) | RabbitMQ (`@vorq/rabbitmq`) |
+|---|---|---|
+| Priority mechanism | Sorted sets per priority level | Native priority queues (`x-max-priority`) |
+| Delayed tasks | Sorted set with score = timestamp | Dead-letter exchange + per-message TTL |
+| Scaling | Add replicas; partition by key prefix | Add consumers; built-in competing-consumer pattern |
+| Persistence | AOF / RDB snapshots | Durable queues + persistent delivery mode |
+| Best for | Low-latency, simple deployments | High-throughput, complex routing topologies |
+
 ### Redis
 
 ```typescript
@@ -321,6 +368,28 @@ const transport2 = new RabbitMQTransport({
   url: "amqp://guest:guest@localhost:5672",
 });
 ```
+
+### Building Your Own Transport
+
+Implement the `TransportAdapter` interface and validate with the built-in test suite:
+
+```ts
+import type { TransportAdapter } from "@vorq/core";
+import { transportContractTests } from "@vorq/core";
+
+class KafkaTransport implements TransportAdapter {
+  // 10 methods to implement
+}
+
+// Validate your adapter against the contract:
+transportContractTests(
+  "KafkaTransport",
+  async () => { /* create and connect */ },
+  async (t) => { /* cleanup */ },
+);
+```
+
+The contract test suite covers all queue operations (enqueue, dequeue, ack, nack), priority ordering, delayed delivery, and dead-letter routing -- so a passing run means your adapter is fully compatible.
 
 ## Persistence
 

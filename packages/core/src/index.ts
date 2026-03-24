@@ -50,6 +50,16 @@ export {
 
 export { DAGResolver } from "./dag/index.js";
 
+export { WorkflowBuilder } from "./workflow/index.js";
+export { Workflow } from "./workflow/index.js";
+export type {
+  WorkflowResult,
+  StepContext,
+  StepHandler,
+  StepOptions,
+  StepDefinition,
+} from "./workflow/index.js";
+
 export {
   VorqError,
   TransportError,

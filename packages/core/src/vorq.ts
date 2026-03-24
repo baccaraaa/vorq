@@ -1,5 +1,6 @@
 import { DAGResolver } from "./dag/dag-resolver.js";
 import { VorqError } from "./errors/vorq-error.js";
+import { WorkflowBuilder } from "./workflow/workflow-builder.js";
 
 class DagRequiresStorageError extends VorqError {
   readonly code = "DAG_REQUIRES_STORAGE";
@@ -214,5 +215,9 @@ export class Vorq {
 
   on<E extends keyof VorqEventMap>(event: E, listener: (data: VorqEventMap[E]) => void): void {
     this.eventBus.on(event, listener);
+  }
+
+  workflow<TInput>(name: string): WorkflowBuilder<TInput, Record<string, never>> {
+    return new WorkflowBuilder<TInput, Record<string, never>>(name, this.logger, this.eventBus);
   }
 }
