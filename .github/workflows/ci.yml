@@ -51,8 +51,7 @@ jobs:
       - name: Setup Prisma
         run: |
           cd packages/core
-          mkdir -p node_modules/@prisma
-          ln -sf ../../../node_modules/@prisma/client node_modules/@prisma/client
+          npm install @prisma/client --no-save
           npx prisma generate
           npx prisma db push
       - run: npm run build
