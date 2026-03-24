@@ -18,22 +18,14 @@
       }
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
-  "keywords": [
-    "task-queue",
-    "distributed",
-    "workers",
-    "typescript",
-    "queue"
-  ],
+  "keywords": ["task-queue", "distributed", "workers", "typescript", "queue"],
   "license": "MIT",
   "repository": {
     "type": "git",
