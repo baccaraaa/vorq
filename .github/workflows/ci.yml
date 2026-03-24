@@ -48,7 +48,13 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: cd packages/core && npx prisma generate && npx prisma db push
+      - name: Setup Prisma
+        run: |
+          cd packages/core
+          mkdir -p node_modules/@prisma
+          ln -sf ../../../node_modules/@prisma/client node_modules/@prisma/client
+          npx prisma generate
+          npx prisma db push
       - run: npm run build
       - run: npm test
 
