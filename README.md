@@ -1,6 +1,10 @@
-# Vorq
+<p align="center">
+  <img src="banner.png" alt="Vorq — Distributed Task Queue for TypeScript" width="100%" />
+</p>
 
-Distributed task queue for TypeScript with **type-safe workflows**, pluggable transports (Redis, RabbitMQ), and optional persistence.
+<p align="center">
+  Distributed task queue for TypeScript with <strong>type-safe workflows</strong>, pluggable transports (Redis, RabbitMQ), and optional persistence.
+</p>
 
 [![npm version](https://img.shields.io/npm/v/@vorq/core.svg)](https://www.npmjs.com/package/@vorq/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
