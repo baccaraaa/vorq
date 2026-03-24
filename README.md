@@ -4,7 +4,7 @@ Distributed task queue for TypeScript with **type-safe workflows**, pluggable tr
 
 [![npm version](https://img.shields.io/npm/v/@vorq/core.svg)](https://www.npmjs.com/package/@vorq/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/vorq/vorq/ci.yml?branch=main)](https://github.com/vorq/vorq/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/baccaraaa/vorq/ci.yml?branch=main)](https://github.com/baccaraaa/vorq/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-3178c6.svg)](https://www.typescriptlang.org/)
 
 ## Features
