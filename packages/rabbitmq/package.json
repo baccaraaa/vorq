@@ -1,6 +1,6 @@
 {
   "name": "@vorq/rabbitmq",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "RabbitMQ transport adapter for Vorq",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,7 +18,9 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
@@ -26,6 +28,14 @@
     "clean": "rm -rf dist"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/baccaraaa/vorq",
+    "directory": "packages/rabbitmq"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "amqplib": "0.10.5"
   },

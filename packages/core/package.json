@@ -1,6 +1,6 @@
 {
   "name": "@vorq/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Distributed task queue for TypeScript",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,15 +18,31 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
-  "keywords": ["task-queue", "distributed", "workers", "typescript", "queue"],
+  "keywords": [
+    "task-queue",
+    "distributed",
+    "workers",
+    "typescript",
+    "queue"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/baccaraaa/vorq",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "@prisma/client": "^6.0.0"
   },
