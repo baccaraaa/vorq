@@ -304,6 +304,10 @@ export class Vorq {
     this.eventBus.on(event, listener);
   }
 
+  off<E extends keyof VorqEventMap>(event: E, listener: (data: VorqEventMap[E]) => void): void {
+    this.eventBus.off(event, listener);
+  }
+
   workflow<TInput>(name: string): WorkflowBuilder<TInput, Record<string, never>> {
     return new WorkflowBuilder<TInput, Record<string, never>>(name, this.logger, this.eventBus);
   }
