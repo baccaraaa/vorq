@@ -1,14 +1,6 @@
 import { DAGResolver } from "./dag/dag-resolver.js";
+import { TaskNotFoundError } from "./errors/index.js";
 import { VorqError } from "./errors/vorq-error.js";
-import { WorkflowBuilder } from "./workflow/workflow-builder.js";
-
-class DagRequiresStorageError extends VorqError {
-  readonly code = "DAG_REQUIRES_STORAGE";
-
-  constructor() {
-    super("DAG dependencies require InMemoryTransport or a StorageAdapter");
-  }
-}
 import { EventBus } from "./events/event-bus.js";
 import type { VorqEventMap } from "./events/types.js";
 import { ConsoleLogger } from "./logging/console-logger.js";
@@ -23,11 +15,28 @@ import type { ScheduleEntry } from "./scheduler/types.js";
 import { RetryPolicy, type RetryPolicyConfig } from "./retry/retry-policy.js";
 import { CronScheduler } from "./scheduler/cron-scheduler.js";
 import type { ScheduleOptions } from "./scheduler/types.js";
-import { type DeadLetterRecord, Priority, type TaskDefinition } from "./task/types.js";
+import { type DeadLetterRecord, Priority, TaskStatus, type TaskDefinition } from "./task/types.js";
 import { InMemoryTransport } from "./transport/in-memory-transport.js";
 import type { QueueOptions, TaskMessage, TransportAdapter } from "./transport/types.js";
 import type { TaskHandler, WorkerHandle, WorkerOptions } from "./worker/types.js";
 import { WorkerPool } from "./worker/worker-pool.js";
+import { WorkflowBuilder } from "./workflow/workflow-builder.js";
+
+class DagRequiresStorageError extends VorqError {
+  readonly code = "DAG_REQUIRES_STORAGE";
+
+  constructor() {
+    super("DAG dependencies require InMemoryTransport or a StorageAdapter");
+  }
+}
+
+class DlqUnsupportedError extends VorqError {
+  readonly code = "DLQ_UNSUPPORTED";
+
+  constructor(operation: string) {
+    super(`${operation} requires InMemoryTransport or a configured StorageAdapter`);
+  }
+}
 
 export interface VorqConfig {
   transport: TransportAdapter;
@@ -218,14 +227,78 @@ export class Vorq {
         history: [],
       }));
     }
+    if (this.storage) {
+      const rows = await this.storage.queryTasks({ queue, status: TaskStatus.ABANDONED });
+      return rows.map((r) => ({
+        taskId: r.id,
+        queue,
+        payload: r.payload,
+        error: r.error ?? "Unknown",
+        attempts: r.attempt,
+        failedAt: r.completedAt ?? r.createdAt,
+        history: [],
+      }));
+    }
     return [];
   }
 
-  async retryFromDLQ(_taskId: string): Promise<void> {}
+  async retryFromDLQ(taskId: string): Promise<void> {
+    if (this.transport instanceof InMemoryTransport) {
+      for (const { name } of this.queueManager.listQueues()) {
+        const removed = this.transport.removeFromQueue(
+          `dlq:${name}`,
+          (env) => env.task.taskId === taskId,
+        );
+        if (removed.length > 0) {
+          for (const env of removed) {
+            await this.transport.publish(
+              name,
+              { ...env.task, attempt: 1 },
+              { priority: env.task.priority },
+            );
+          }
+          return;
+        }
+      }
+      throw new TaskNotFoundError(taskId);
+    }
+    if (this.storage) {
+      const rec = await this.storage.getTask(taskId);
+      if (!rec) throw new TaskNotFoundError(taskId);
+      await this.transport.publish(
+        rec.queue,
+        {
+          taskId,
+          taskName: rec.name,
+          queue: rec.queue,
+          payload: rec.payload,
+          attempt: 1,
+          priority: rec.priority,
+          delay: 0,
+          maxRetries: rec.maxRetries,
+          createdAt: Date.now(),
+        },
+        { priority: rec.priority },
+      );
+      return;
+    }
+    throw new DlqUnsupportedError("retryFromDLQ");
+  }
 
-  async retryAllFromDLQ(_queue: string): Promise<void> {}
+  async retryAllFromDLQ(queue: string): Promise<number> {
+    const entries = await this.getDLQ(queue);
+    for (const e of entries) await this.retryFromDLQ(e.taskId);
+    return entries.length;
+  }
 
-  async purgeDLQ(_queue: string): Promise<void> {}
+  async purgeDLQ(queue: string): Promise<number> {
+    if (this.transport instanceof InMemoryTransport) {
+      return this.transport.clearQueue(`dlq:${queue}`);
+    }
+    await this.transport.deleteQueue(`dlq:${queue}`);
+    await this.transport.createQueue(`dlq:${queue}`, {});
+    return 0;
+  }
 
   on<E extends keyof VorqEventMap>(event: E, listener: (data: VorqEventMap[E]) => void): void {
     this.eventBus.on(event, listener);

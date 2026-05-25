@@ -77,6 +77,22 @@ export class InMemoryTransport implements TransportAdapter {
     return this.queues.get(queue) ?? [];
   }
 
+  removeFromQueue(queue: string, predicate: (e: MessageEnvelope) => boolean): MessageEnvelope[] {
+    const q = this.queues.get(queue) ?? [];
+    const kept: MessageEnvelope[] = [];
+    const removed: MessageEnvelope[] = [];
+    for (const env of q) (predicate(env) ? removed : kept).push(env);
+    this.queues.set(queue, kept);
+    return removed;
+  }
+
+  clearQueue(queue: string): number {
+    const q = this.queues.get(queue) ?? [];
+    const n = q.length;
+    this.queues.set(queue, []);
+    return n;
+  }
+
   async drain(queue: string): Promise<void> {
     const handler = this.handlers.get(queue);
     if (!handler) {
