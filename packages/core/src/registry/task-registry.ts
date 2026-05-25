@@ -57,12 +57,48 @@ export class TaskRegistry {
   constructor(bus: EventBus, opts: TaskRegistryOptions = {}) {
     this.capacity = opts.capacity ?? 1000;
 
-    bus.on("task.enqueued", (d) => this.upsert(d.taskId, { taskId: d.taskId, queue: d.queue, status: TaskStatus.QUEUED, attempt: 1, progress: 0, enqueuedAt: Date.now() }));
-    bus.on("task.active", (d) => this.patch(d.taskId, { status: TaskStatus.ACTIVE, attempt: d.attempt, startedAt: Date.now() }));
-    bus.on("task.completed", (d) => this.patch(d.taskId, { status: TaskStatus.COMPLETED, result: d.result, completedAt: Date.now(), progress: 100 }));
-    bus.on("task.failed", (d) => this.patch(d.taskId, { status: TaskStatus.FAILED, error: d.error.message, attempt: d.attempt }));
-    bus.on("task.retrying", (d) => this.patch(d.taskId, { status: TaskStatus.RETRYING, attempt: d.attempt }));
-    bus.on("task.deadLettered", (d) => this.patch(d.taskId, { status: TaskStatus.ABANDONED, error: d.error.message, attempt: d.attempts }));
+    bus.on("task.enqueued", (d) =>
+      this.upsert(d.taskId, {
+        taskId: d.taskId,
+        queue: d.queue,
+        status: TaskStatus.QUEUED,
+        attempt: 1,
+        progress: 0,
+        enqueuedAt: Date.now(),
+      }),
+    );
+    bus.on("task.active", (d) =>
+      this.patch(d.taskId, {
+        status: TaskStatus.ACTIVE,
+        attempt: d.attempt,
+        startedAt: Date.now(),
+      }),
+    );
+    bus.on("task.completed", (d) =>
+      this.patch(d.taskId, {
+        status: TaskStatus.COMPLETED,
+        result: d.result,
+        completedAt: Date.now(),
+        progress: 100,
+      }),
+    );
+    bus.on("task.failed", (d) =>
+      this.patch(d.taskId, {
+        status: TaskStatus.FAILED,
+        error: d.error.message,
+        attempt: d.attempt,
+      }),
+    );
+    bus.on("task.retrying", (d) =>
+      this.patch(d.taskId, { status: TaskStatus.RETRYING, attempt: d.attempt }),
+    );
+    bus.on("task.deadLettered", (d) =>
+      this.patch(d.taskId, {
+        status: TaskStatus.ABANDONED,
+        error: d.error.message,
+        attempt: d.attempts,
+      }),
+    );
     bus.on("task.progress", (d) => this.patch(d.taskId, { progress: d.percent }));
   }
 
@@ -72,7 +108,11 @@ export class TaskRegistry {
 
   list(filter: ListFilter = {}): Page<RegistryRecord> {
     const limit = Math.max(1, Math.min(filter.limit ?? 50, 500));
-    const statuses = filter.status ? (Array.isArray(filter.status) ? filter.status : [filter.status]) : null;
+    const statuses = filter.status
+      ? Array.isArray(filter.status)
+        ? filter.status
+        : [filter.status]
+      : null;
     let startIdx = 0;
     if (filter.cursor) {
       const idx = this.order.indexOf(filter.cursor);

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { InMemoryTransport, Vorq } from "@vorq/core";
+import { describe, expect, it } from "vitest";
 import { EmbeddedDataSource } from "./data/embedded.js";
 import { createServer } from "./server.js";
 

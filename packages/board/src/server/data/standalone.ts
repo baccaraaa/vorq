@@ -1,11 +1,5 @@
 // packages/board/src/server/data/standalone.ts
-import type {
-  DeadLetterRecord,
-  ListFilter,
-  Page,
-  RegistryRecord,
-  ScheduleEntry,
-} from "@vorq/core";
+import type { DeadLetterRecord, ListFilter, Page, RegistryRecord, ScheduleEntry } from "@vorq/core";
 import type { BoardDataSource, QueueDetail, QueueInfo, WorkerInfo } from "./types.js";
 
 export interface StandaloneOptions {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ConsoleLogger } from "../logging/console-logger.js";
 import { EventBus } from "../events/event-bus.js";
+import { ConsoleLogger } from "../logging/console-logger.js";
 import { MetricsCollector } from "./metrics-collector.js";
 
 describe("MetricsCollector", () => {
@@ -33,7 +33,15 @@ describe("MetricsCollector", () => {
     const bus = new EventBus(new ConsoleLogger());
     const collector = new MetricsCollector(bus);
     const m = collector.snapshot("nope");
-    expect(m).toEqual({ pending: 0, active: 0, completed: 0, failed: 0, delayed: 0, avgDuration: 0, throughput: 0 });
+    expect(m).toEqual({
+      pending: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+      avgDuration: 0,
+      throughput: 0,
+    });
   });
 
   it("task.failed followed by task.deadLettered decrements active once", async () => {
@@ -42,7 +50,12 @@ describe("MetricsCollector", () => {
     await bus.emit("task.enqueued", { taskId: "1", queue: "q" });
     await bus.emit("task.active", { taskId: "1", queue: "q", attempt: 1 });
     await bus.emit("task.failed", { taskId: "1", queue: "q", error: new Error("x"), attempt: 1 });
-    await bus.emit("task.deadLettered", { taskId: "1", queue: "q", error: new Error("x"), attempts: 1 });
+    await bus.emit("task.deadLettered", {
+      taskId: "1",
+      queue: "q",
+      error: new Error("x"),
+      attempts: 1,
+    });
 
     const m = c.snapshot("q");
     expect(m.active).toBe(0);

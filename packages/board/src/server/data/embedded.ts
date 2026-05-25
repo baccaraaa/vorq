@@ -8,13 +8,7 @@ import type {
   VorqEvent,
   VorqEventMap,
 } from "@vorq/core";
-import type {
-  AnyEvent,
-  BoardDataSource,
-  QueueDetail,
-  QueueInfo,
-  WorkerInfo,
-} from "./types.js";
+import type { AnyEvent, BoardDataSource, QueueDetail, QueueInfo, WorkerInfo } from "./types.js";
 
 const ALL_EVENTS: VorqEvent[] = [
   "task.enqueued",

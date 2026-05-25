@@ -1,6 +1,6 @@
+import { InMemoryTransport, Vorq } from "@vorq/core";
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { InMemoryTransport, Vorq } from "@vorq/core";
 import { EmbeddedDataSource } from "../data/embedded.js";
 import { createServer } from "../server.js";
 

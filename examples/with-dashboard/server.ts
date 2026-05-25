@@ -1,6 +1,6 @@
-import { InMemoryTransport, Vorq } from "@vorq/core";
 import { createVorqBoard } from "@vorq/board";
 import { expressAdapter } from "@vorq/board/express";
+import { InMemoryTransport, Vorq } from "@vorq/core";
 import express from "express";
 
 const vorq = new Vorq({ transport: new InMemoryTransport() });

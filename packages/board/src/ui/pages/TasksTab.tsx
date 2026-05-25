@@ -128,7 +128,9 @@ function Badge({ status }: { status: string }) {
     RETRYING: "bg-amber-900 text-amber-200",
   };
   return (
-    <span className={`text-xs px-2 py-0.5 rounded ${colors[status] ?? "bg-zinc-800 text-zinc-200"}`}>
+    <span
+      className={`text-xs px-2 py-0.5 rounded ${colors[status] ?? "bg-zinc-800 text-zinc-200"}`}
+    >
       {status}
     </span>
   );

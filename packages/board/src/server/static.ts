@@ -9,10 +9,7 @@ const __dirname = path.dirname(__filename);
 
 // In built form, UI assets live at ../ui relative to dist/server bundle.
 // In test environment (running from src/), look up two levels.
-const candidateDirs = [
-  path.resolve(__dirname, "../ui"),
-  path.resolve(__dirname, "../../dist/ui"),
-];
+const candidateDirs = [path.resolve(__dirname, "../ui"), path.resolve(__dirname, "../../dist/ui")];
 
 function resolveUiDir(): string | null {
   for (const dir of candidateDirs) {
@@ -36,7 +33,7 @@ export async function registerStatic(app: FastifyInstance, base = ""): Promise<v
   });
 
   const indexHtml = fs.readFileSync(path.join(uiDir, "index.html"), "utf8");
-  const rewritten = indexHtml.replace(/href="\/"/,  `href="${base}/"`);
+  const rewritten = indexHtml.replace(/href="\/"/, `href="${base}/"`);
 
   app.get(`${base}/`, async (_req, reply) => reply.type("text/html").send(rewritten));
   app.setNotFoundHandler((_req, reply) => reply.type("text/html").send(rewritten));

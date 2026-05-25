@@ -78,7 +78,16 @@ export class MetricsCollector {
 
   snapshot(queue: string): QueueMetrics {
     const c = this.counters.get(queue);
-    if (!c) return { pending: 0, active: 0, completed: 0, failed: 0, delayed: 0, avgDuration: 0, throughput: 0 };
+    if (!c)
+      return {
+        pending: 0,
+        active: 0,
+        completed: 0,
+        failed: 0,
+        delayed: 0,
+        avgDuration: 0,
+        throughput: 0,
+      };
     const cutoff = this.now() - this.windowMs;
     c.completionsLastHour = c.completionsLastHour.filter((e) => e.t >= cutoff);
     return {
@@ -95,7 +104,16 @@ export class MetricsCollector {
   private get(queue: string): PerQueueCounters {
     let c = this.counters.get(queue);
     if (!c) {
-      c = { pending: 0, active: 0, completed: 0, failed: 0, delayed: 0, totalDuration: 0, completedSamples: 0, completionsLastHour: [] };
+      c = {
+        pending: 0,
+        active: 0,
+        completed: 0,
+        failed: 0,
+        delayed: 0,
+        totalDuration: 0,
+        completedSamples: 0,
+        completionsLastHour: [],
+      };
       this.counters.set(queue, c);
     }
     return c;

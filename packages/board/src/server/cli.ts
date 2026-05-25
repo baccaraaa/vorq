@@ -12,30 +12,33 @@ program
   .option("--host <string>", "Bind host", "127.0.0.1")
   .option("--transport <url>", "Transport URL (e.g. redis://...)", "memory://")
   .option("--storage <url>", "Optional Postgres URL for historical tasks")
-  .option(
-    "--queues <list>",
-    "Comma-separated known queue names",
-    (v: string) => v.split(",").map((s) => s.trim()).filter(Boolean),
+  .option("--queues <list>", "Comma-separated known queue names", (v: string) =>
+    v
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
   )
   .option("--read-only", "Disable mutations")
-  .action(async (opts: {
-    port: string;
-    host: string;
-    transport: string;
-    storage?: string;
-    queues?: string[];
-    readOnly?: boolean;
-  }) => {
-    const ds = new StandaloneDataSource({
-      transportUrl: opts.transport,
-      storageUrl: opts.storage,
-      knownQueues: opts.queues,
-    });
-    await ds.connect();
-    const server = createServer({ dataSource: ds, readOnly: !!opts.readOnly });
-    await server.listen({ port: Number(opts.port), host: opts.host });
-    // biome-ignore lint/suspicious/noConsole: CLI startup banner
-    console.log(`vorq-board listening on http://${opts.host}:${opts.port}`);
-  });
+  .action(
+    async (opts: {
+      port: string;
+      host: string;
+      transport: string;
+      storage?: string;
+      queues?: string[];
+      readOnly?: boolean;
+    }) => {
+      const ds = new StandaloneDataSource({
+        transportUrl: opts.transport,
+        storageUrl: opts.storage,
+        knownQueues: opts.queues,
+      });
+      await ds.connect();
+      const server = createServer({ dataSource: ds, readOnly: !!opts.readOnly });
+      await server.listen({ port: Number(opts.port), host: opts.host });
+      // biome-ignore lint/suspicious/noConsole: CLI startup banner
+      console.log(`vorq-board listening on http://${opts.host}:${opts.port}`);
+    },
+  );
 
 program.parse();

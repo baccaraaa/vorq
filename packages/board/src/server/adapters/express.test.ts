@@ -1,6 +1,6 @@
+import { InMemoryTransport, Vorq } from "@vorq/core";
 import express from "express";
 import { describe, expect, it } from "vitest";
-import { InMemoryTransport, Vorq } from "@vorq/core";
 import { createVorqBoard } from "../../index.js";
 import { expressAdapter } from "./express.js";
 

@@ -1,5 +1,5 @@
-import type { FastifyInstance } from "fastify";
 import type { TaskStatus } from "@vorq/core";
+import type { FastifyInstance } from "fastify";
 import type { ServerOptions } from "../server.js";
 
 export function registerTaskRoutes(app: FastifyInstance, opts: ServerOptions, base = "") {

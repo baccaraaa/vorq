@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ConsoleLogger } from "../logging/console-logger.js";
 import { EventBus } from "../events/event-bus.js";
-import { TaskRegistry } from "./task-registry.js";
+import { ConsoleLogger } from "../logging/console-logger.js";
 import { TaskStatus } from "../task/types.js";
+import { TaskRegistry } from "./task-registry.js";
 
 describe("TaskRegistry", () => {
   it("records task lifecycle and exposes a record", async () => {
@@ -11,7 +11,12 @@ describe("TaskRegistry", () => {
 
     await bus.emit("task.enqueued", { taskId: "t1", queue: "q" });
     await bus.emit("task.active", { taskId: "t1", queue: "q", attempt: 1 });
-    await bus.emit("task.completed", { taskId: "t1", queue: "q", result: { ok: true }, duration: 12 });
+    await bus.emit("task.completed", {
+      taskId: "t1",
+      queue: "q",
+      result: { ok: true },
+      duration: 12,
+    });
 
     const r = reg.get("t1");
     expect(r?.status).toBe(TaskStatus.COMPLETED);
