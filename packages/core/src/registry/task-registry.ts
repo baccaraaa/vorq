@@ -22,16 +22,33 @@ export interface TaskRegistryOptions {
 export interface ListFilter {
   queue?: string;
   status?: TaskStatus | TaskStatus[];
+  /** Substring match against `taskId`. */
   search?: string;
+  /** Maximum items per page; clamped to [1, 500]. Default 50. */
   limit?: number;
+  /** `taskId` of the last item returned by the previous page. */
   cursor?: string;
 }
 
 export interface Page<T> {
   items: T[];
+  /**
+   * Set when more records exist past the current window. May yield an empty
+   * page on the next call if all remaining records are filtered out — that's
+   * the expected end-of-stream signal for filtered queries.
+   */
   nextCursor?: string;
 }
 
+/**
+ * Subscribes to {@link EventBus} task lifecycle events and keeps a bounded
+ * ring buffer of recent task records, queryable by queue and status with
+ * cursor-based pagination.
+ *
+ * Used by `@vorq/board` to render task tables when no `StorageAdapter` is
+ * configured. Older records are evicted in FIFO order once `capacity` is
+ * exceeded.
+ */
 export class TaskRegistry {
   private readonly capacity: number;
   private readonly records = new Map<string, RegistryRecord>();
