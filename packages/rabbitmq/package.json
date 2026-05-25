@@ -41,6 +41,6 @@
     "@types/amqplib": "0.10.6"
   },
   "peerDependencies": {
-    "@vorq/core": "^0.1.0"
+    "@vorq/core": "^0.2.0"
   }
 }
