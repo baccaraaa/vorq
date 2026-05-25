@@ -1,7 +1,7 @@
 {
   "name": "vorq",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/*", "examples/*"],
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
