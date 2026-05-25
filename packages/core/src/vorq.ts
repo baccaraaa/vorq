@@ -13,9 +13,13 @@ import { EventBus } from "./events/event-bus.js";
 import type { VorqEventMap } from "./events/types.js";
 import { ConsoleLogger } from "./logging/console-logger.js";
 import type { VorqLogger } from "./logging/types.js";
+import { MetricsCollector } from "./metrics/metrics-collector.js";
 import type { StorageAdapter } from "./persistence/types.js";
+import type { QueueMetrics } from "./persistence/types.js";
 import { QueueManager } from "./queue/queue-manager.js";
 import type { QueueHandle } from "./queue/types.js";
+import { TaskRegistry, type ListFilter, type Page, type RegistryRecord } from "./registry/task-registry.js";
+import type { ScheduleEntry } from "./scheduler/types.js";
 import { RetryPolicy, type RetryPolicyConfig } from "./retry/retry-policy.js";
 import { CronScheduler } from "./scheduler/cron-scheduler.js";
 import type { ScheduleOptions } from "./scheduler/types.js";
@@ -41,6 +45,8 @@ export class Vorq {
   private readonly storage?: StorageAdapter;
   private readonly eventBus: EventBus;
   private readonly logger: VorqLogger;
+  private readonly metrics: MetricsCollector;
+  private readonly registry: TaskRegistry;
   private readonly queueManager: QueueManager;
   private readonly dagResolver: DAGResolver;
   private readonly scheduler: CronScheduler;
@@ -57,6 +63,8 @@ export class Vorq {
     this.storage = config.storage;
     this.logger = config.logger ?? new ConsoleLogger();
     this.eventBus = new EventBus(this.logger);
+    this.metrics = new MetricsCollector(this.eventBus);
+    this.registry = new TaskRegistry(this.eventBus);
     this.dagResolver = new DAGResolver();
     this.workers = new Map();
     this.waitingTasks = new Map();
@@ -219,5 +227,25 @@ export class Vorq {
 
   workflow<TInput>(name: string): WorkflowBuilder<TInput, Record<string, never>> {
     return new WorkflowBuilder<TInput, Record<string, never>>(name, this.logger, this.eventBus);
+  }
+
+  listQueues(): { name: string }[] {
+    return this.queueManager.listQueues();
+  }
+
+  getQueueMetrics(queue: string): QueueMetrics {
+    return this.metrics.snapshot(queue);
+  }
+
+  listTasks(filter: ListFilter): Page<RegistryRecord> {
+    return this.registry.list(filter);
+  }
+
+  getTask(taskId: string): RegistryRecord | undefined {
+    return this.registry.get(taskId);
+  }
+
+  listSchedules(): ScheduleEntry[] {
+    return this.scheduler.getSchedules();
   }
 }

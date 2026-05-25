@@ -41,4 +41,8 @@ export class QueueManager {
   hasQueue(name: string): boolean {
     return this.registry.has(name);
   }
+
+  listQueues(): { name: string }[] {
+    return Array.from(this.registry.keys()).map((name) => ({ name }));
+  }
 }
