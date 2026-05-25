@@ -33,7 +33,7 @@ export function registerEventRoutes(app: FastifyInstance, opts: ServerOptions, b
     }
 
     // Heartbeat every 15s so reverse proxies don't close the connection.
-    const heartbeat = setInterval(() => reply.raw.write(`: heartbeat\n\n`), 15_000);
+    const heartbeat = setInterval(() => reply.raw.write(": heartbeat\n\n"), 15_000);
 
     req.raw.on("close", () => {
       unsub();

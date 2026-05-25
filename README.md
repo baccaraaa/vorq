@@ -13,6 +13,7 @@
 
 ## Features
 
+- **Web dashboard** -- live queue/task/DLQ inspector via [`@vorq/board`](packages/board)
 - **Priority queues** -- critical, high, medium, and low priority levels
 - **Delayed tasks** -- schedule tasks to execute after a specified delay
 - **Retry with exponential backoff** -- configurable retry policies with fixed, exponential, and jitter strategies
@@ -66,6 +67,7 @@ await vorq.enqueue("emails", {
 | [`@vorq/redis`](packages/redis) | Redis transport adapter | [![npm](https://img.shields.io/npm/v/@vorq/redis.svg)](https://www.npmjs.com/package/@vorq/redis) |
 | [`@vorq/rabbitmq`](packages/rabbitmq) | RabbitMQ transport adapter | [![npm](https://img.shields.io/npm/v/@vorq/rabbitmq.svg)](https://www.npmjs.com/package/@vorq/rabbitmq) |
 | [`@vorq/nestjs`](packages/nestjs) | NestJS module with decorators | [![npm](https://img.shields.io/npm/v/@vorq/nestjs.svg)](https://www.npmjs.com/package/@vorq/nestjs) |
+| [`@vorq/board`](packages/board) | Web dashboard (queues, tasks, DLQ, schedules) | [![npm](https://img.shields.io/npm/v/@vorq/board.svg)](https://www.npmjs.com/package/@vorq/board) |
 
 ## API Overview
 
@@ -501,6 +503,33 @@ export class UserService {
   }
 }
 ```
+
+## Dashboard
+
+`@vorq/board` ships a web UI for monitoring queues, inspecting tasks, retrying from the dead-letter queue, and viewing schedules.
+
+```bash
+npm install @vorq/board
+```
+
+```typescript
+import express from "express";
+import { Vorq, InMemoryTransport } from "@vorq/core";
+import { createVorqBoard } from "@vorq/board";
+import { expressAdapter } from "@vorq/board/express";
+
+const vorq = new Vorq({ transport: new InMemoryTransport() });
+await vorq.start();
+
+const board = createVorqBoard({ vorq });
+const app = express();
+app.use(expressAdapter(board));
+app.listen(3000);
+```
+
+Open <http://localhost:3000> to see live queues, tasks, and DLQ contents.
+
+For a complete runnable demo with simulated traffic, see [`examples/with-dashboard/`](examples/with-dashboard).
 
 ## Testing
 
