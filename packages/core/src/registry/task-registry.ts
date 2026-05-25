@@ -81,14 +81,17 @@ export class TaskRegistry {
     const items: RegistryRecord[] = [];
     let i = startIdx;
     for (; i < this.order.length && items.length < limit; i++) {
-      const rec = this.records.get(this.order[i]);
+      const taskId = this.order[i];
+      if (!taskId) continue;
+      const rec = this.records.get(taskId);
       if (!rec) continue;
       if (filter.queue && rec.queue !== filter.queue) continue;
       if (statuses && !statuses.includes(rec.status)) continue;
       if (filter.search && !rec.taskId.includes(filter.search)) continue;
       items.push(rec);
     }
-    const nextCursor = i < this.order.length && items.length > 0 ? items[items.length - 1].taskId : undefined;
+    const lastItem = items[items.length - 1];
+    const nextCursor = i < this.order.length && lastItem ? lastItem.taskId : undefined;
     return { items, nextCursor };
   }
 
