@@ -24,9 +24,7 @@
       "default": "./dist/ui/"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "npm run build:ui && npm run build:server",
     "build:ui": "vite build",
@@ -41,7 +39,7 @@
     "tailwind-merge": "3.6.0"
   },
   "peerDependencies": {
-    "@vorq/core": "0.1.1"
+    "@vorq/core": "^0.2.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
