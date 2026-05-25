@@ -1,6 +1,6 @@
 {
   "name": "@vorq/nestjs",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "NestJS integration for Vorq",
   "type": "module",
   "main": "./dist/index.cjs",
