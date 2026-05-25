@@ -72,9 +72,15 @@ export class Vorq {
 
     this.defaultRetryPolicy = new RetryPolicy(config.defaults?.retryPolicy ?? { maxRetries: 3 });
 
-    this.queueManager = new QueueManager(this.transport, (queue, task) =>
-      this.enqueue(queue, task),
-    );
+    this.queueManager = new QueueManager(this.transport, {
+      enqueue: (queue, task) => this.enqueue(queue, task),
+      pauseWorkers: async (queue) => {
+        for (const pool of this.workers.get(queue) ?? []) pool.pause();
+      },
+      resumeWorkers: async (queue) => {
+        for (const pool of this.workers.get(queue) ?? []) pool.resume();
+      },
+    });
 
     this.scheduler = new CronScheduler((queue, task) => this.enqueue(queue, task), this.logger);
 
@@ -247,5 +253,28 @@ export class Vorq {
 
   listSchedules(): ScheduleEntry[] {
     return this.scheduler.getSchedules();
+  }
+
+  async pauseQueue(queue: string): Promise<void> {
+    await this.queueManager.getQueue(queue).pause();
+  }
+
+  async resumeQueue(queue: string): Promise<void> {
+    await this.queueManager.getQueue(queue).resume();
+  }
+
+  listWorkers(queue: string): { id: string; running: boolean }[] {
+    const pools = this.workers.get(queue) ?? [];
+    return pools.map((p, i) => ({ id: `${queue}#${i}`, running: p.isRunning() }));
+  }
+
+  async pauseWorker(queue: string, workerId: string): Promise<void> {
+    const idx = Number(workerId.split("#")[1]);
+    this.workers.get(queue)?.[idx]?.pause();
+  }
+
+  async resumeWorker(queue: string, workerId: string): Promise<void> {
+    const idx = Number(workerId.split("#")[1]);
+    this.workers.get(queue)?.[idx]?.resume();
   }
 }
