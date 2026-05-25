@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import type { BoardDataSource } from "./data/types.js";
 import { registerDlqRoutes } from "./routes/dlq.js";
+import { registerEventRoutes } from "./routes/events.js";
 import { registerQueueRoutes } from "./routes/queues.js";
 import { registerScheduleRoutes } from "./routes/schedules.js";
 import { registerTaskRoutes } from "./routes/tasks.js";
@@ -22,6 +23,7 @@ export function createServer(opts: ServerOptions): FastifyInstance {
   registerDlqRoutes(app, opts, base);
   registerWorkerRoutes(app, opts, base);
   registerScheduleRoutes(app, opts, base);
+  registerEventRoutes(app, opts, base);
 
   return app;
 }
