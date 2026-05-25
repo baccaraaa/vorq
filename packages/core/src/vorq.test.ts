@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Priority, TaskStatus } from "./task/types.js";
+import { Priority } from "./task/types.js";
 import { InMemoryTransport } from "./transport/in-memory-transport.js";
 import { Vorq } from "./vorq.js";
 import type { TaskContext } from "./worker/types.js";
