@@ -40,10 +40,8 @@ const board = createVorqBoard({ vorq });
 await board.server.ready();
 
 const app = express();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use("/", expressAdapter(board) as any);
+app.use(expressAdapter(board));
 
 app.listen(3001, () => {
-  // biome-ignore lint/suspicious/noConsole: example startup banner
   console.log("Dashboard at http://localhost:3001");
 });

@@ -36,7 +36,6 @@ program
       await ds.connect();
       const server = createServer({ dataSource: ds, readOnly: !!opts.readOnly });
       await server.listen({ port: Number(opts.port), host: opts.host });
-      // biome-ignore lint/suspicious/noConsole: CLI startup banner
       console.log(`vorq-board listening on http://${opts.host}:${opts.port}`);
     },
   );

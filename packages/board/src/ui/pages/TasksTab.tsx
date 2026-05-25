@@ -59,7 +59,14 @@ export function TasksTab({ queue }: { queue: string }) {
               <tr
                 key={t.taskId}
                 onClick={() => setSelected(t.taskId)}
-                className={`border-t border-zinc-800 cursor-pointer hover:bg-zinc-900 ${
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelected(t.taskId);
+                  }
+                }}
+                tabIndex={0}
+                className={`border-t border-zinc-800 cursor-pointer hover:bg-zinc-900 focus:outline-none focus:bg-zinc-900 ${
                   selected === t.taskId ? "bg-zinc-900" : ""
                 }`}
               >
