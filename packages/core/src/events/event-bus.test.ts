@@ -70,4 +70,20 @@ describe("EventBus", () => {
       bus.emit("task.completed", { taskId: "1", queue: "q", result: null, duration: 0 }),
     ).resolves.not.toThrow();
   });
+
+  it("subscribeAll receives all event types", async () => {
+    const bus = new EventBus(new ConsoleLogger());
+    const received: { event: string; data: unknown }[] = [];
+    const unsub = bus.subscribeAll((event, data) => {
+      received.push({ event, data });
+    });
+
+    await bus.emit("task.enqueued", { taskId: "1", queue: "q" });
+    await bus.emit("task.completed", { taskId: "1", queue: "q", result: null, duration: 1 });
+
+    expect(received.map((r) => r.event)).toEqual(["task.enqueued", "task.completed"]);
+    unsub();
+    await bus.emit("task.enqueued", { taskId: "2", queue: "q" });
+    expect(received).toHaveLength(2);
+  });
 });
