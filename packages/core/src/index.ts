@@ -69,3 +69,13 @@ export {
   TaskNotFoundError,
   ShutdownError,
 } from "./errors/index.js";
+
+export { MetricsCollector } from "./metrics/metrics-collector.js";
+export type { MetricsCollectorOptions } from "./metrics/metrics-collector.js";
+export { TaskRegistry } from "./registry/task-registry.js";
+export type {
+  RegistryRecord,
+  TaskRegistryOptions,
+  ListFilter,
+  Page,
+} from "./registry/task-registry.js";

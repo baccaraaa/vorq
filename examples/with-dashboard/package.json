@@ -1,0 +1,18 @@
+{
+  "name": "vorq-with-dashboard-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Demo: Vorq + @vorq/board with simulated producer/worker traffic",
+  "scripts": {
+    "start": "node --experimental-strip-types server.ts"
+  },
+  "dependencies": {
+    "@vorq/board": "0.1.0",
+    "@vorq/core": "^0.2.0",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  }
+}

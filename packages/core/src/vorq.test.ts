@@ -194,3 +194,28 @@ describe("Vorq", () => {
     await vorq.shutdown();
   });
 });
+
+describe("Vorq introspection", () => {
+  it("exposes metrics and tasks for a queue without storage", async () => {
+    const vorq = new Vorq({ transport: new InMemoryTransport() });
+    await vorq.createQueue("emails");
+
+    vorq.registerWorker("emails", async () => "ok");
+    await vorq.start();
+
+    await vorq.enqueue("emails", { name: "send", payload: { to: "a" } });
+    // Allow async listeners to settle
+    await new Promise((r) => setImmediate(r));
+
+    const queues = vorq.listQueues();
+    expect(queues.map((q) => q.name)).toContain("emails");
+
+    const metrics = vorq.getQueueMetrics("emails");
+    expect(metrics).toMatchObject({ completed: expect.any(Number) });
+
+    const page = vorq.listTasks({ queue: "emails", limit: 10 });
+    expect(page.items.length).toBeGreaterThan(0);
+
+    await vorq.shutdown();
+  });
+});

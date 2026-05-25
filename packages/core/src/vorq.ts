@@ -1,5 +1,30 @@
 import { DAGResolver } from "./dag/dag-resolver.js";
+import { TaskNotFoundError } from "./errors/index.js";
 import { VorqError } from "./errors/vorq-error.js";
+import { EventBus } from "./events/event-bus.js";
+import type { VorqEventMap } from "./events/types.js";
+import { ConsoleLogger } from "./logging/console-logger.js";
+import type { VorqLogger } from "./logging/types.js";
+import { MetricsCollector } from "./metrics/metrics-collector.js";
+import type { StorageAdapter } from "./persistence/types.js";
+import type { QueueMetrics } from "./persistence/types.js";
+import { QueueManager } from "./queue/queue-manager.js";
+import type { QueueHandle } from "./queue/types.js";
+import {
+  type ListFilter,
+  type Page,
+  type RegistryRecord,
+  TaskRegistry,
+} from "./registry/task-registry.js";
+import { RetryPolicy, type RetryPolicyConfig } from "./retry/retry-policy.js";
+import { CronScheduler } from "./scheduler/cron-scheduler.js";
+import type { ScheduleEntry } from "./scheduler/types.js";
+import type { ScheduleOptions } from "./scheduler/types.js";
+import { type DeadLetterRecord, Priority, type TaskDefinition, TaskStatus } from "./task/types.js";
+import { InMemoryTransport } from "./transport/in-memory-transport.js";
+import type { QueueOptions, TaskMessage, TransportAdapter } from "./transport/types.js";
+import type { TaskHandler, WorkerHandle, WorkerOptions } from "./worker/types.js";
+import { WorkerPool } from "./worker/worker-pool.js";
 import { WorkflowBuilder } from "./workflow/workflow-builder.js";
 
 class DagRequiresStorageError extends VorqError {
@@ -9,21 +34,14 @@ class DagRequiresStorageError extends VorqError {
     super("DAG dependencies require InMemoryTransport or a StorageAdapter");
   }
 }
-import { EventBus } from "./events/event-bus.js";
-import type { VorqEventMap } from "./events/types.js";
-import { ConsoleLogger } from "./logging/console-logger.js";
-import type { VorqLogger } from "./logging/types.js";
-import type { StorageAdapter } from "./persistence/types.js";
-import { QueueManager } from "./queue/queue-manager.js";
-import type { QueueHandle } from "./queue/types.js";
-import { RetryPolicy, type RetryPolicyConfig } from "./retry/retry-policy.js";
-import { CronScheduler } from "./scheduler/cron-scheduler.js";
-import type { ScheduleOptions } from "./scheduler/types.js";
-import { type DeadLetterRecord, Priority, type TaskDefinition } from "./task/types.js";
-import { InMemoryTransport } from "./transport/in-memory-transport.js";
-import type { QueueOptions, TaskMessage, TransportAdapter } from "./transport/types.js";
-import type { TaskHandler, WorkerHandle, WorkerOptions } from "./worker/types.js";
-import { WorkerPool } from "./worker/worker-pool.js";
+
+class DlqUnsupportedError extends VorqError {
+  readonly code = "DLQ_UNSUPPORTED";
+
+  constructor(operation: string) {
+    super(`${operation} requires InMemoryTransport or a configured StorageAdapter`);
+  }
+}
 
 export interface VorqConfig {
   transport: TransportAdapter;
@@ -41,6 +59,8 @@ export class Vorq {
   private readonly storage?: StorageAdapter;
   private readonly eventBus: EventBus;
   private readonly logger: VorqLogger;
+  private readonly metrics: MetricsCollector;
+  private readonly registry: TaskRegistry;
   private readonly queueManager: QueueManager;
   private readonly dagResolver: DAGResolver;
   private readonly scheduler: CronScheduler;
@@ -57,6 +77,8 @@ export class Vorq {
     this.storage = config.storage;
     this.logger = config.logger ?? new ConsoleLogger();
     this.eventBus = new EventBus(this.logger);
+    this.metrics = new MetricsCollector(this.eventBus);
+    this.registry = new TaskRegistry(this.eventBus);
     this.dagResolver = new DAGResolver();
     this.workers = new Map();
     this.waitingTasks = new Map();
@@ -64,9 +86,15 @@ export class Vorq {
 
     this.defaultRetryPolicy = new RetryPolicy(config.defaults?.retryPolicy ?? { maxRetries: 3 });
 
-    this.queueManager = new QueueManager(this.transport, (queue, task) =>
-      this.enqueue(queue, task),
-    );
+    this.queueManager = new QueueManager(this.transport, {
+      enqueue: (queue, task) => this.enqueue(queue, task),
+      pauseWorkers: async (queue) => {
+        for (const pool of this.workers.get(queue) ?? []) pool.pause();
+      },
+      resumeWorkers: async (queue) => {
+        for (const pool of this.workers.get(queue) ?? []) pool.resume();
+      },
+    });
 
     this.scheduler = new CronScheduler((queue, task) => this.enqueue(queue, task), this.logger);
 
@@ -204,20 +232,131 @@ export class Vorq {
         history: [],
       }));
     }
+    if (this.storage) {
+      const rows = await this.storage.queryTasks({ queue, status: TaskStatus.ABANDONED });
+      return rows.map((r) => ({
+        taskId: r.id,
+        queue,
+        payload: r.payload,
+        error: r.error ?? "Unknown",
+        attempts: r.attempt,
+        failedAt: r.completedAt ?? r.createdAt,
+        history: [],
+      }));
+    }
     return [];
   }
 
-  async retryFromDLQ(_taskId: string): Promise<void> {}
+  async retryFromDLQ(taskId: string): Promise<void> {
+    if (this.transport instanceof InMemoryTransport) {
+      for (const { name } of this.queueManager.listQueues()) {
+        const removed = this.transport.removeFromQueue(
+          `dlq:${name}`,
+          (env) => env.task.taskId === taskId,
+        );
+        if (removed.length > 0) {
+          for (const env of removed) {
+            await this.transport.publish(
+              name,
+              { ...env.task, attempt: 1 },
+              { priority: env.task.priority },
+            );
+          }
+          return;
+        }
+      }
+      throw new TaskNotFoundError(taskId);
+    }
+    if (this.storage) {
+      const rec = await this.storage.getTask(taskId);
+      if (!rec) throw new TaskNotFoundError(taskId);
+      await this.transport.publish(
+        rec.queue,
+        {
+          taskId,
+          taskName: rec.name,
+          queue: rec.queue,
+          payload: rec.payload,
+          attempt: 1,
+          priority: rec.priority,
+          delay: 0,
+          maxRetries: rec.maxRetries,
+          createdAt: Date.now(),
+        },
+        { priority: rec.priority },
+      );
+      return;
+    }
+    throw new DlqUnsupportedError("retryFromDLQ");
+  }
 
-  async retryAllFromDLQ(_queue: string): Promise<void> {}
+  async retryAllFromDLQ(queue: string): Promise<number> {
+    const entries = await this.getDLQ(queue);
+    for (const e of entries) await this.retryFromDLQ(e.taskId);
+    return entries.length;
+  }
 
-  async purgeDLQ(_queue: string): Promise<void> {}
+  async purgeDLQ(queue: string): Promise<number> {
+    if (this.transport instanceof InMemoryTransport) {
+      return this.transport.clearQueue(`dlq:${queue}`);
+    }
+    await this.transport.deleteQueue(`dlq:${queue}`);
+    await this.transport.createQueue(`dlq:${queue}`, {});
+    return 0;
+  }
 
   on<E extends keyof VorqEventMap>(event: E, listener: (data: VorqEventMap[E]) => void): void {
     this.eventBus.on(event, listener);
   }
 
+  off<E extends keyof VorqEventMap>(event: E, listener: (data: VorqEventMap[E]) => void): void {
+    this.eventBus.off(event, listener);
+  }
+
   workflow<TInput>(name: string): WorkflowBuilder<TInput, Record<string, never>> {
     return new WorkflowBuilder<TInput, Record<string, never>>(name, this.logger, this.eventBus);
+  }
+
+  listQueues(): { name: string }[] {
+    return this.queueManager.listQueues();
+  }
+
+  getQueueMetrics(queue: string): QueueMetrics {
+    return this.metrics.snapshot(queue);
+  }
+
+  listTasks(filter: ListFilter): Page<RegistryRecord> {
+    return this.registry.list(filter);
+  }
+
+  getTask(taskId: string): RegistryRecord | undefined {
+    return this.registry.get(taskId);
+  }
+
+  listSchedules(): ScheduleEntry[] {
+    return this.scheduler.getSchedules();
+  }
+
+  async pauseQueue(queue: string): Promise<void> {
+    await this.queueManager.getQueue(queue).pause();
+  }
+
+  async resumeQueue(queue: string): Promise<void> {
+    await this.queueManager.getQueue(queue).resume();
+  }
+
+  listWorkers(queue: string): { id: string; running: boolean }[] {
+    const pools = this.workers.get(queue) ?? [];
+    return pools.map((p, i) => ({ id: `${queue}#${i}`, running: p.isRunning() }));
+  }
+
+  async pauseWorker(queue: string, workerId: string): Promise<void> {
+    const idx = Number(workerId.split("#")[1]);
+    this.workers.get(queue)?.[idx]?.pause();
+  }
+
+  async resumeWorker(queue: string, workerId: string): Promise<void> {
+    const idx = Number(workerId.split("#")[1]);
+    this.workers.get(queue)?.[idx]?.resume();
   }
 }

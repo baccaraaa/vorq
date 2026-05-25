@@ -38,6 +38,6 @@
     "ioredis": "5.4.2"
   },
   "peerDependencies": {
-    "@vorq/core": "^0.1.0"
+    "@vorq/core": "^0.2.0"
   }
 }

@@ -14,7 +14,11 @@ describe("QueueManager", () => {
     transport = new InMemoryTransport();
     await transport.connect();
     enqueueCallback = vi.fn().mockResolvedValue("task-id-123");
-    manager = new QueueManager(transport, enqueueCallback);
+    manager = new QueueManager(transport, {
+      enqueue: enqueueCallback,
+      pauseWorkers: vi.fn().mockResolvedValue(undefined),
+      resumeWorkers: vi.fn().mockResolvedValue(undefined),
+    });
   });
 
   describe("createQueue", () => {
@@ -95,5 +99,21 @@ describe("QueueManager", () => {
     it("returns false for non-existing queue", () => {
       expect(manager.hasQueue("unknown")).toBe(false);
     });
+  });
+});
+
+import { Vorq } from "../vorq.js";
+
+describe("queue pause/resume", () => {
+  it("pauses workers attached to the queue", async () => {
+    const vorq = new Vorq({ transport: new InMemoryTransport() });
+    const queue = await vorq.createQueue("q");
+    const w = vorq.registerWorker("q", async () => "ok");
+    await vorq.start();
+    await queue.pause();
+    expect(w.isRunning()).toBe(false);
+    await queue.resume();
+    expect(w.isRunning()).toBe(true);
+    await vorq.shutdown();
   });
 });
