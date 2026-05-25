@@ -24,7 +24,7 @@
       "default": "./dist/ui/"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "CHANGELOG.md"],
   "scripts": {
     "build": "npm run build:ui && npm run build:server",
     "build:ui": "vite build",
