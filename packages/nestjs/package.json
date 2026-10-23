@@ -25,12 +25,23 @@
     "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
+  "keywords": [
+    "vorq",
+    "nestjs",
+    "nest",
+    "task-queue",
+    "job-queue",
+    "background-jobs",
+    "typescript"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/baccaraaa/vorq",
     "directory": "packages/nestjs"
   },
+  "homepage": "https://github.com/baccaraaa/vorq/tree/main/packages/nestjs#readme",
+  "bugs": "https://github.com/baccaraaa/vorq/issues",
   "publishConfig": {
     "access": "public"
   },

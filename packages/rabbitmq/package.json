@@ -25,12 +25,23 @@
     "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
+  "keywords": [
+    "vorq",
+    "task-queue",
+    "job-queue",
+    "rabbitmq",
+    "amqp",
+    "background-jobs",
+    "typescript"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/baccaraaa/vorq",
     "directory": "packages/rabbitmq"
   },
+  "homepage": "https://github.com/baccaraaa/vorq/tree/main/packages/rabbitmq#readme",
+  "bugs": "https://github.com/baccaraaa/vorq/issues",
   "publishConfig": {
     "access": "public"
   },
