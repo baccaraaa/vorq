@@ -8,7 +8,7 @@
     "start": "node --experimental-strip-types server.ts"
   },
   "dependencies": {
-    "@vorq/board": "0.1.0",
+    "@vorq/board": "0.1.1",
     "@vorq/core": "^0.2.0",
     "express": "^4.21.0"
   },

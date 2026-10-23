@@ -4,7 +4,7 @@ Thanks for your interest in contributing to Vorq. This guide will get you up and
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - Docker (for Redis and RabbitMQ)
 
 ## Getting Started

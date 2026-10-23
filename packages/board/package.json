@@ -1,6 +1,6 @@
 {
   "name": "@vorq/board",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Web dashboard for Vorq",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -33,9 +33,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@fastify/static": "^8.0.0",
+    "@fastify/static": "^10.1.7",
     "clsx": "2.1.1",
-    "fastify": "^5.0.0",
+    "fastify": "^5.12.5",
     "tailwind-merge": "3.6.0"
   },
   "peerDependencies": {
@@ -61,7 +61,27 @@
     "vite": "^6.0.0",
     "vitest": "^3.0.0"
   },
+  "keywords": [
+    "vorq",
+    "dashboard",
+    "queue-dashboard",
+    "task-queue",
+    "job-queue",
+    "admin-ui",
+    "dead-letter-queue",
+    "typescript"
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/baccaraaa/vorq",
+    "directory": "packages/board"
+  },
+  "homepage": "https://github.com/baccaraaa/vorq/tree/main/packages/board#readme",
+  "bugs": "https://github.com/baccaraaa/vorq/issues",
+  "engines": {
+    "node": ">=22"
+  },
   "publishConfig": {
     "access": "public"
   }
