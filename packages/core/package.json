@@ -25,13 +25,27 @@
     "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
-  "keywords": ["task-queue", "distributed", "workers", "typescript", "queue"],
+  "keywords": [
+    "task-queue",
+    "job-queue",
+    "background-jobs",
+    "distributed",
+    "workers",
+    "workflow",
+    "scheduler",
+    "cron",
+    "dead-letter-queue",
+    "typescript",
+    "queue"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/baccaraaa/vorq",
     "directory": "packages/core"
   },
+  "homepage": "https://github.com/baccaraaa/vorq/tree/main/packages/core#readme",
+  "bugs": "https://github.com/baccaraaa/vorq/issues",
   "publishConfig": {
     "access": "public"
   },

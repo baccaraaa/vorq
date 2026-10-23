@@ -25,12 +25,23 @@
     "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
+  "keywords": [
+    "vorq",
+    "task-queue",
+    "job-queue",
+    "redis",
+    "ioredis",
+    "background-jobs",
+    "typescript"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/baccaraaa/vorq",
     "directory": "packages/redis"
   },
+  "homepage": "https://github.com/baccaraaa/vorq/tree/main/packages/redis#readme",
+  "bugs": "https://github.com/baccaraaa/vorq/issues",
   "publishConfig": {
     "access": "public"
   },
